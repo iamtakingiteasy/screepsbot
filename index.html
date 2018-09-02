@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <title>WASM Test</title>
+</head>
+<body>
+  <script>
+      const PAGE_SIZE = 65536;
+      const PAGES = 32;
+      const memory = new WebAssembly.Memory({initial: PAGES, maximum: PAGES});
+      const UINT8 = new Uint8Array(memory.buffer);
+      const Module = {};
+      fetch('./build/screepsbot.wasm').then(res => {
+          if (res.ok) {
+              return res.arrayBuffer();
+          }
+          throw new Error('Unable to fetch Web Assembly file');
+      })
+          .then(bytecode => WebAssembly.compile(bytecode))
+          .then(wasmModule =>
+              WebAssembly.instantiate(wasmModule, {
+                  'env': {
+                      'memoryBase': 0,
+                      'tableBase': 0,
+                      'memory': memory,
+                      'table': new WebAssembly.Table({initial: 0, element: 'anyfunc'}),
+                  }
+              })
+          )
+          .then(m => {
+              Module.exports = m.exports;
+          });
+  </script>
+</body>
+i</html>
